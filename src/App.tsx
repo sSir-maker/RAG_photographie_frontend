@@ -46,17 +46,31 @@ export default function App() {
 
   const handleLogin = async (email: string, password: string): Promise<void> => {
     try {
+      // OPTIMISATION MOBILE: Timeout plus long pour les connexions lentes
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 secondes
+
       const response = await fetch(API_ENDPOINTS.auth.login, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Erreur lors de la connexion');
+        let errorMessage = 'Erreur lors de la connexion';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || errorMessage;
+        } catch {
+          // Si la réponse n'est pas du JSON, utiliser le status
+          errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -65,30 +79,62 @@ export default function App() {
       setUserName(data.user.name);
       setIsAuthenticated(true);
     } catch (error: any) {
-      throw error;
+      // OPTIMISATION MOBILE: Meilleure gestion des erreurs réseau
+      if (error.name === 'AbortError') {
+        throw new Error('La requête a pris trop de temps. Vérifiez votre connexion internet.');
+      } else if (error.message?.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
+      } else if (error.message) {
+        throw error;
+      } else {
+        throw new Error('Une erreur inattendue est survenue. Veuillez réessayer.');
+      }
     }
   };
 
   const handleRegister = async (name: string, email: string, password: string): Promise<{ success: boolean; email: string }> => {
     try {
+      // OPTIMISATION MOBILE: Timeout plus long pour les connexions lentes
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 secondes
+
       const response = await fetch(API_ENDPOINTS.auth.signup, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name, email, password }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Erreur lors de l\'inscription');
+        let errorMessage = 'Erreur lors de l\'inscription';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || errorMessage;
+        } catch {
+          // Si la réponse n'est pas du JSON, utiliser le status
+          errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Après signup réussi, on ne connecte pas directement
       // On retourne juste un succès pour que AuthPage bascule vers login
       return { success: true, email };
     } catch (error: any) {
-      throw error;
+      // OPTIMISATION MOBILE: Meilleure gestion des erreurs réseau
+      if (error.name === 'AbortError') {
+        throw new Error('La requête a pris trop de temps. Vérifiez votre connexion internet.');
+      } else if (error.message?.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
+      } else if (error.message) {
+        throw error;
+      } else {
+        throw new Error('Une erreur inattendue est survenue. Veuillez réessayer.');
+      }
     }
   };
 
