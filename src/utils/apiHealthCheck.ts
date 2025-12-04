@@ -3,6 +3,7 @@
  */
 
 import { API_ENDPOINTS } from '../config';
+import { parseJSONResponse, getErrorMessageForStatus } from './responseParser';
 
 export interface HealthCheckResult {
   isHealthy: boolean;
@@ -29,16 +30,25 @@ export async function checkBackendHealth(): Promise<HealthCheckResult> {
     clearTimeout(timeoutId);
 
     if (response.ok) {
-      const data = await response.json();
-      return {
-        isHealthy: true,
-        message: 'Backend accessible',
-        url: API_ENDPOINTS.health.basic,
-      };
+      try {
+        const data = await parseJSONResponse(response);
+        return {
+          isHealthy: true,
+          message: 'Backend accessible',
+          url: API_ENDPOINTS.health.basic,
+        };
+      } catch (parseError: any) {
+        return {
+          isHealthy: false,
+          message: parseError.message || 'Le backend a retourné une réponse invalide',
+          url: API_ENDPOINTS.health.basic,
+        };
+      }
     } else {
+      const errorMessage = getErrorMessageForStatus(response.status, response.statusText);
       return {
         isHealthy: false,
-        message: `Backend retourne une erreur: ${response.status} ${response.statusText}`,
+        message: errorMessage,
         url: API_ENDPOINTS.health.basic,
       };
     }

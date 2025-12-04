@@ -6,6 +6,7 @@ import { ThemeSelector } from './components/ThemeSelector';
 import { AuthPage } from './components/AuthPage';
 import { Menu, X } from 'lucide-react';
 import { API_ENDPOINTS } from './config';
+import { parseJSONResponse, getErrorMessageForStatus } from './utils/responseParser';
 
 export interface Message {
   id: string;
@@ -64,7 +65,7 @@ export default function App() {
       if (!response.ok) {
         let errorMessage = 'Erreur lors de la connexion';
         try {
-          const error = await response.json();
+          const error = await parseJSONResponse(response);
           console.error('❌ Login - Error response:', error);
           
           // Extraire le message d'erreur
@@ -95,14 +96,19 @@ export default function App() {
           }
           
           errorMessage = detail || errorMessage;
-        } catch {
-          // Si la réponse n'est pas du JSON, utiliser le status
-          errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        } catch (parseError: any) {
+          // Si la réponse est du HTML ou ne peut pas être parsée comme JSON
+          console.error('❌ Login - Parse error:', parseError);
+          if (parseError.message?.includes('HTML') || parseError.message?.includes('page d\'erreur')) {
+            errorMessage = parseError.message;
+          } else {
+            errorMessage = getErrorMessageForStatus(response.status, response.statusText);
+          }
         }
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const data = await parseJSONResponse(response);
       setAuthToken(data.access_token);
       localStorage.setItem('auth_token', data.access_token);
       setUserName(data.user.name);
@@ -146,7 +152,7 @@ export default function App() {
       if (!response.ok) {
         let errorMessage = 'Erreur lors de l\'inscription';
         try {
-          const error = await response.json();
+          const error = await parseJSONResponse(response);
           console.error('❌ Register - Error response:', error);
           
           // Extraire le message d'erreur
@@ -177,15 +183,19 @@ export default function App() {
           }
           
           errorMessage = detail || errorMessage;
-        } catch (e) {
-          // Si la réponse n'est pas du JSON, utiliser le status
-          console.error('❌ Register - Non-JSON error:', e);
-          errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        } catch (parseError: any) {
+          // Si la réponse est du HTML ou ne peut pas être parsée comme JSON
+          console.error('❌ Register - Parse error:', parseError);
+          if (parseError.message?.includes('HTML') || parseError.message?.includes('page d\'erreur')) {
+            errorMessage = parseError.message;
+          } else {
+            errorMessage = getErrorMessageForStatus(response.status, response.statusText);
+          }
         }
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const data = await parseJSONResponse(response);
       console.log('✅ Register - Success');
       
       // Après signup réussi, on ne connecte pas directement
