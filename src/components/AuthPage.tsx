@@ -82,7 +82,7 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center px-4 ${
+    <div className={`min-h-screen flex items-center justify-center px-4 auth-container ${
       isDark ? 'bg-[#0a0a0a]' : 'bg-gray-50'
     }`}>
       {/* Theme Toggle */}
@@ -146,9 +146,11 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Jean Dupont"
+                    autoComplete="name"
                     className={`flex-1 bg-transparent outline-none ${
                       isDark ? 'text-white placeholder-white/40' : 'text-gray-900 placeholder-gray-500'
                     }`}
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
               </div>
@@ -169,9 +171,11 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="vous@exemple.com"
+                  autoComplete="email"
                   className={`flex-1 bg-transparent outline-none ${
                     isDark ? 'text-white placeholder-white/40' : 'text-gray-900 placeholder-gray-500'
                   }`}
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
@@ -191,16 +195,25 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
                   className={`flex-1 bg-transparent outline-none ${
                     isDark ? 'text-white placeholder-white/40' : 'text-gray-900 placeholder-gray-500'
                   }`}
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
 
             {error && (
-              <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
-                <p className="text-sm text-red-500">{error}</p>
+              <div 
+                className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20"
+                data-load-failed={error.includes('Load failed') || error.includes('Failed to fetch') || error.includes('NetworkError')}
+              >
+                <p className="text-sm text-red-500">
+                  {error.includes('Load failed') || error.includes('Failed to fetch') || error.includes('NetworkError')
+                    ? '❌ Erreur de connexion. Vérifiez votre connexion internet et réessayez.'
+                    : error}
+                </p>
               </div>
             )}
 
