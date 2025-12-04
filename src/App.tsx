@@ -51,6 +51,10 @@ export default function App() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 secondes
 
+      // DEBUG: Log de l'URL utilisée
+      console.log('🔍 Login - API URL:', API_ENDPOINTS.auth.login);
+      console.log('🔍 Login - Request body:', { email, password: '***' });
+      
       const response = await fetch(API_ENDPOINTS.auth.login, {
         method: 'POST',
         headers: {
@@ -62,6 +66,14 @@ export default function App() {
 
       clearTimeout(timeoutId);
 
+      // DEBUG: Log de la réponse
+      console.log('📡 Login - Response status:', response.status, response.statusText);
+      console.log('📡 Login - Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // Vérifier le Content-Type AVANT de parser
+      const contentType = response.headers.get('content-type');
+      console.log('📡 Login - Content-Type:', contentType);
+      
       if (!response.ok) {
         let errorMessage = 'Erreur lors de la connexion';
         try {
@@ -108,6 +120,20 @@ export default function App() {
         throw new Error(errorMessage);
       }
 
+      // Vérifier AVANT de parser si la réponse est du HTML (même avec status 200)
+      const responseText = await response.clone().text();
+      console.log('📡 Login - Response preview (first 200 chars):', responseText.substring(0, 200));
+      console.log('📡 Login - Content-Type:', response.headers.get('content-type'));
+      
+      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+        console.error('❌ Login - HTML détecté avec status 200 !');
+        throw new Error(
+          'Le serveur a retourné une page HTML au lieu de JSON (Status: 200). ' +
+          'Le backend est peut-être en erreur ou mal configuré. ' +
+          `Vérifiez que l'URL backend est correcte : ${API_ENDPOINTS.auth.login}`
+        );
+      }
+      
       const data = await parseJSONResponse(response);
       setAuthToken(data.access_token);
       localStorage.setItem('auth_token', data.access_token);
