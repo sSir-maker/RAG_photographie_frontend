@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Theme } from '../App';
 import { Camera, Mail, Lock, User, Sun, Moon } from 'lucide-react';
+import { checkBackendHealth, getErrorMessage } from '../utils/apiHealthCheck';
+import { API_URL } from '../config';
 
 interface AuthPageProps {
   theme: Theme;
@@ -31,6 +33,36 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
 
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [backendHealth, setBackendHealth] = useState<{ checked: boolean; isHealthy: boolean; message: string }>({
+    checked: false,
+    isHealthy: true,
+    message: '',
+  });
+
+  // Vérifier la santé du backend au chargement
+  useEffect(() => {
+    const checkHealth = async () => {
+      console.log('🔍 Vérification de la connexion au backend...');
+      console.log('🔗 URL backend configurée:', API_URL);
+      
+      const result = await checkBackendHealth();
+      console.log('📊 Résultat du health check:', result);
+      
+      const errorMessage = !result.isHealthy ? getErrorMessage(result) : '';
+      
+      setBackendHealth({
+        checked: true,
+        isHealthy: result.isHealthy,
+        message: errorMessage || result.message,
+      });
+
+      if (!result.isHealthy) {
+        console.error('❌ Backend inaccessible:', result.message);
+      }
+    };
+
+    checkHealth();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,7 +236,29 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
               </div>
             </div>
 
-            {error && (
+            {!backendHealth.checked && (
+              <div className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <p className="text-sm text-blue-500">
+                  🔍 Vérification de la connexion au backend...
+                </p>
+              </div>
+            )}
+
+            {backendHealth.checked && !backendHealth.isHealthy && (
+              <div 
+                className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20"
+                data-load-failed={true}
+              >
+                <p className="text-sm text-red-500 whitespace-pre-line">
+                  ❌ {backendHealth.message}
+                </p>
+                <p className="text-xs text-red-400 mt-2">
+                  🔗 Backend: {API_URL}
+                </p>
+              </div>
+            )}
+
+            {error && backendHealth.isHealthy && (
               <div 
                 className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20"
                 data-load-failed={error.includes('Load failed') || error.includes('Failed to fetch') || error.includes('NetworkError')}
