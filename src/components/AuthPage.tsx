@@ -77,6 +77,15 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
           setIsLoading(false);
           return;
         }
+        
+        // Validation de l'email côté client
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          setError('Format d\'email invalide. Veuillez vérifier votre adresse email (exemple: votre@email.com)');
+          setIsLoading(false);
+          return;
+        }
+        
         await onLogin(email, password);
         // Si onLogin réussit, l'utilisateur sera automatiquement authentifié
         // et redirigé vers le bot (géré dans App.tsx)
@@ -86,6 +95,15 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
           setIsLoading(false);
           return;
         }
+        
+        // Validation de l'email côté client
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          setError('Format d\'email invalide. Veuillez vérifier votre adresse email (exemple: votre@email.com)');
+          setIsLoading(false);
+          return;
+        }
+        
         if (password.length < 6) {
           setError('Le mot de passe doit contenir au moins 6 caractères');
           setIsLoading(false);
@@ -105,7 +123,18 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
     } catch (err: any) {
       console.error('❌ AuthPage - Error:', err);
       // Afficher un message d'erreur plus détaillé
-      const errorMessage = err.message || 'Une erreur est survenue';
+      let errorMessage = err.message || 'Une erreur est survenue';
+      
+      // Traduire les messages d'erreur Pydantic en français
+      if (errorMessage.includes('did not match the expected pattern') || 
+          errorMessage.includes('string does not match expected pattern')) {
+        errorMessage = 'Format d\'email invalide. Veuillez vérifier que votre adresse email est correcte (exemple: votre@email.com)';
+      } else if (errorMessage.includes('field required')) {
+        errorMessage = 'Veuillez remplir tous les champs requis';
+      } else if (errorMessage.includes('validation error')) {
+        errorMessage = 'Les données saisies ne sont pas valides. Veuillez vérifier vos informations.';
+      }
+      
       console.error('❌ AuthPage - Error message:', errorMessage);
       setError(errorMessage);
     } finally {

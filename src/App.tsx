@@ -65,7 +65,36 @@ export default function App() {
         let errorMessage = 'Erreur lors de la connexion';
         try {
           const error = await response.json();
-          errorMessage = error.detail || errorMessage;
+          console.error('❌ Login - Error response:', error);
+          
+          // Extraire le message d'erreur
+          let detail = error.detail;
+          
+          // Si c'est un tableau d'erreurs (validation Pydantic)
+          if (Array.isArray(detail)) {
+            const firstError = detail[0];
+            if (firstError?.msg) {
+              detail = firstError.msg;
+              // Traduire les erreurs de validation Pydantic
+              if (firstError.type === 'value_error.email' || 
+                  detail.includes('did not match the expected pattern') ||
+                  detail.includes('string does not match expected pattern')) {
+                detail = 'Format d\'email invalide. Veuillez vérifier que votre adresse email est correcte (exemple: votre@email.com)';
+              }
+            }
+          }
+          
+          // Traduire les messages d'erreur courants
+          if (typeof detail === 'string') {
+            if (detail.includes('did not match the expected pattern') || 
+                detail.includes('string does not match expected pattern')) {
+              detail = 'Format d\'email invalide. Veuillez vérifier que votre adresse email est correcte (exemple: votre@email.com)';
+            } else if (detail.includes('field required')) {
+              detail = 'Veuillez remplir tous les champs requis';
+            }
+          }
+          
+          errorMessage = detail || errorMessage;
         } catch {
           // Si la réponse n'est pas du JSON, utiliser le status
           errorMessage = `Erreur ${response.status}: ${response.statusText}`;
@@ -119,7 +148,35 @@ export default function App() {
         try {
           const error = await response.json();
           console.error('❌ Register - Error response:', error);
-          errorMessage = error.detail || errorMessage;
+          
+          // Extraire le message d'erreur
+          let detail = error.detail;
+          
+          // Si c'est un tableau d'erreurs (validation Pydantic)
+          if (Array.isArray(detail)) {
+            const firstError = detail[0];
+            if (firstError?.msg) {
+              detail = firstError.msg;
+              // Traduire les erreurs de validation Pydantic
+              if (firstError.type === 'value_error.email' || 
+                  detail.includes('did not match the expected pattern') ||
+                  detail.includes('string does not match expected pattern')) {
+                detail = 'Format d\'email invalide. Veuillez vérifier que votre adresse email est correcte (exemple: votre@email.com)';
+              }
+            }
+          }
+          
+          // Traduire les messages d'erreur courants
+          if (typeof detail === 'string') {
+            if (detail.includes('did not match the expected pattern') || 
+                detail.includes('string does not match expected pattern')) {
+              detail = 'Format d\'email invalide. Veuillez vérifier que votre adresse email est correcte (exemple: votre@email.com)';
+            } else if (detail.includes('field required')) {
+              detail = 'Veuillez remplir tous les champs requis';
+            }
+          }
+          
+          errorMessage = detail || errorMessage;
         } catch (e) {
           // Si la réponse n'est pas du JSON, utiliser le status
           console.error('❌ Register - Non-JSON error:', e);
