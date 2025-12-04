@@ -15,26 +15,16 @@ const envApiUrl = import.meta.env.VITE_API_URL;
 function detectBackendUrl(): string {
   // 1. Utiliser la variable d'environnement si définie
   if (envApiUrl) {
-    return envApiUrl;
+    // S'assurer que l'URL commence par http:// ou https://
+    if (envApiUrl.startsWith('http://') || envApiUrl.startsWith('https://')) {
+      return envApiUrl;
+    }
+    // Si l'URL ne commence pas par http:// ou https://, l'ajouter
+    return `https://${envApiUrl}`;
   }
   
-  // 2. En production, détecter automatiquement depuis l'hostname
+  // 2. En production, toujours utiliser l'URL absolue du backend Render
   if (isProduction) {
-    const hostname = window.location.hostname;
-    
-    // Si on est sur render.com, utiliser le backend render
-    if (hostname.includes('onrender.com')) {
-      // Détecter si c'est le frontend ou backend
-      if (hostname.includes('frontend')) {
-        // Remplacer 'frontend' par 'backend' dans l'URL
-        return hostname.replace('frontend', 'backend');
-      }
-      // Sinon, utiliser le backend standard
-      return 'https://rag-photographie-backend.onrender.com';
-    }
-    
-    // Si on est sur un autre domaine, essayer de déduire
-    // Par défaut, utiliser le backend Render
     return 'https://rag-photographie-backend.onrender.com';
   }
   
