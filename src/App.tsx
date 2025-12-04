@@ -94,6 +94,9 @@ export default function App() {
 
   const handleRegister = async (name: string, email: string, password: string): Promise<{ success: boolean; email: string }> => {
     try {
+      // DEBUG: Log de l'URL utilisée
+      console.log('🔍 Register - API URL:', API_ENDPOINTS.auth.signup);
+      
       // OPTIMISATION MOBILE: Timeout plus long pour les connexions lentes
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 secondes
@@ -109,27 +112,35 @@ export default function App() {
 
       clearTimeout(timeoutId);
 
+      console.log('📡 Register - Response status:', response.status, response.statusText);
+
       if (!response.ok) {
         let errorMessage = 'Erreur lors de l\'inscription';
         try {
           const error = await response.json();
+          console.error('❌ Register - Error response:', error);
           errorMessage = error.detail || errorMessage;
-        } catch {
+        } catch (e) {
           // Si la réponse n'est pas du JSON, utiliser le status
+          console.error('❌ Register - Non-JSON error:', e);
           errorMessage = `Erreur ${response.status}: ${response.statusText}`;
         }
         throw new Error(errorMessage);
       }
 
+      const data = await response.json();
+      console.log('✅ Register - Success');
+      
       // Après signup réussi, on ne connecte pas directement
       // On retourne juste un succès pour que AuthPage bascule vers login
       return { success: true, email };
     } catch (error: any) {
+      console.error('❌ Register - Exception:', error);
       // OPTIMISATION MOBILE: Meilleure gestion des erreurs réseau
       if (error.name === 'AbortError') {
         throw new Error('La requête a pris trop de temps. Vérifiez votre connexion internet.');
-      } else if (error.message?.includes('fetch')) {
-        throw new Error('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
+      } else if (error.message?.includes('fetch') || error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez votre connexion internet et que le backend est accessible.');
       } else if (error.message) {
         throw error;
       } else {

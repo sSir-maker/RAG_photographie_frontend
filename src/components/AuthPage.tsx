@@ -71,7 +71,11 @@ export function AuthPage({ theme, onThemeToggle, onLogin, onRegister }: AuthPage
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      console.error('❌ AuthPage - Error:', err);
+      // Afficher un message d'erreur plus détaillé
+      const errorMessage = err.message || 'Une erreur est survenue';
+      console.error('❌ AuthPage - Error message:', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

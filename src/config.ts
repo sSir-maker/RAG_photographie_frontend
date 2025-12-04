@@ -3,7 +3,11 @@
  */
 
 // URL de l'API backend depuis les variables d'environnement
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+// DEBUG: Log pour vérifier la configuration
+const envApiUrl = import.meta.env.VITE_API_URL;
+console.log('🔧 API Configuration - VITE_API_URL:', envApiUrl);
+export const API_URL = envApiUrl || 'http://localhost:8001';
+console.log('🔧 API Configuration - Final API_URL:', API_URL);
 
 // Configuration de l'API
 export const API_CONFIG = {
