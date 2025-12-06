@@ -39,8 +39,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: test
-    # Désactivé si pas de secrets Docker Hub (Railway build directement depuis GitHub)
-    if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
+    # Note: Si les secrets Docker Hub ne sont pas configurés, le job échouera lors de l'exécution
+    # Le build se fait automatiquement via Render (déploiement automatique depuis GitHub)
+    if: github.event_name != 'pull_request'
     
     steps:
     - uses: actions/checkout@v4
