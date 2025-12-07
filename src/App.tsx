@@ -40,10 +40,10 @@ export default function App() {
   );
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<number | string | null>(null);
-  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [, setIsLoadingConversations] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const currentConversation = conversations.find(c => c.id === currentConversationId);
+  const currentConversation = conversations.find((c: Conversation) => c.id === currentConversationId);
 
   const handleLogin = async (email: string, password: string): Promise<void> => {
     try {
@@ -221,7 +221,7 @@ export default function App() {
         throw new Error(errorMessage);
       }
 
-      const data = await parseJSONResponse(response);
+      await parseJSONResponse(response);
       console.log('✅ Register - Success');
       
       // Après signup réussi, on ne connecte pas directement
@@ -243,7 +243,7 @@ export default function App() {
   };
 
   const toggleThemeMode = () => {
-    setTheme(prev => ({
+    setTheme((prev: Theme) => ({
       ...prev,
       mode: prev.mode === 'dark' ? 'light' : 'dark',
     }));
@@ -422,7 +422,7 @@ export default function App() {
     };
 
     // Ajouter le message utilisateur immédiatement
-    setConversations(prev => prev.map(conv => {
+    setConversations((prev: Conversation[]) => prev.map((conv: Conversation) => {
       if (conv.id === conversationId) {
         return {
           ...conv,
@@ -440,7 +440,7 @@ export default function App() {
       timestamp: new Date(),
     };
 
-    setConversations(prev => prev.map(conv => {
+    setConversations((prev: Conversation[]) => prev.map((conv: Conversation) => {
       if (conv.id === conversationId) {
         return {
           ...conv,
@@ -456,14 +456,14 @@ export default function App() {
       let streamingContent = '';
       
       // Remplacer le message de chargement par un message vide pour le streaming
-      setConversations(prev => prev.map(conv => {
+      setConversations((prev: Conversation[]) => prev.map((conv: Conversation) => {
         if (conv.id === conversationId) {
-          const messagesWithoutLoading = conv.messages.filter(msg => msg.id !== loadingMessage.id);
+          const messagesWithoutLoading = conv.messages.filter((msg: Message) => msg.id !== loadingMessage.id);
           return {
             ...conv,
             messages: [...messagesWithoutLoading, {
               id: streamingMessageId,
-              role: 'assistant',
+              role: 'assistant' as const,
               content: '',
               timestamp: new Date(),
             }],
@@ -515,11 +515,11 @@ export default function App() {
                 streamingContent += data.content;
                 
                 // Mettre à jour le message en temps réel
-                setConversations(prev => prev.map(conv => {
+                setConversations((prev: Conversation[]) => prev.map((conv: Conversation) => {
                   if (conv.id === conversationId) {
                     return {
                       ...conv,
-                      messages: conv.messages.map(msg => 
+                      messages: conv.messages.map((msg: Message) => 
                         msg.id === streamingMessageId
                           ? { ...msg, content: streamingContent }
                           : msg
@@ -533,17 +533,18 @@ export default function App() {
                 // On pourrait les afficher dans un panneau latéral
               } else if (data.type === 'done') {
                 // Le streaming est terminé, recharger depuis la DB pour avoir les IDs corrects
-                const messagesResponse = await fetch(
-                  API_ENDPOINTS.conversations.messages(conversationId),
-                  {
-                    headers: {
-                      'Authorization': `Bearer ${authToken}`,
-                    },
-                  }
-                );
+                if (conversationId) {
+                  const messagesResponse = await fetch(
+                    API_ENDPOINTS.conversations.messages(conversationId),
+                    {
+                      headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                      },
+                    }
+                  );
                 
-                if (messagesResponse.ok) {
-                  const msgs = await messagesResponse.json();
+                  if (messagesResponse.ok) {
+                    const msgs = await messagesResponse.json();
                   const loadedMessages: Message[] = msgs.map((msg: any) => ({
                     id: msg.id.toString(),
                     role: msg.role,
@@ -552,7 +553,7 @@ export default function App() {
                     timestamp: new Date(msg.created_at),
                   }));
                   
-                  setConversations(prev => prev.map(conv => {
+                  setConversations((prev: Conversation[]) => prev.map((conv: Conversation) => {
                     if (conv.id === conversationId) {
                       return {
                         ...conv,
@@ -561,6 +562,7 @@ export default function App() {
                     }
                     return conv;
                   }));
+                  }
                 }
               } else if (data.type === 'error') {
                 throw new Error(data.message || 'Erreur lors du streaming');
@@ -580,9 +582,9 @@ export default function App() {
         timestamp: new Date(),
       };
 
-      setConversations(prev => prev.map(conv => {
+      setConversations((prev: Conversation[]) => prev.map((conv: Conversation) => {
         if (conv.id === conversationId) {
-          const messagesWithoutLoading = conv.messages.filter(msg => msg.id !== loadingMessage.id);
+          const messagesWithoutLoading = conv.messages.filter((msg: Message) => msg.id !== loadingMessage.id);
           return {
             ...conv,
             messages: [...messagesWithoutLoading, errorMessage],
@@ -612,7 +614,7 @@ export default function App() {
           messages: [],
           createdAt: new Date(newConv.created_at),
         };
-        setConversations(prev => [conversation, ...prev]);
+        setConversations((prev: Conversation[]) => [conversation, ...prev]);
         setCurrentConversationId(conversation.id);
         setIsSidebarOpen(false);
       }
@@ -633,8 +635,8 @@ export default function App() {
       });
       
       if (response.ok) {
-        setConversations(prev => {
-          const remaining = prev.filter(c => c.id !== id);
+        setConversations((prev: Conversation[]) => {
+          const remaining = prev.filter((c: Conversation) => c.id !== id);
           if (currentConversationId === id) {
             if (remaining.length > 0) {
               setCurrentConversationId(remaining[0].id);
@@ -683,8 +685,8 @@ export default function App() {
       {/* Sidebar */}
       <Sidebar
         conversations={conversations}
-        currentConversationId={currentConversationId}
-        onSelectConversation={async (id) => {
+        currentConversationId={currentConversationId?.toString() || ''}
+        onSelectConversation={async (id: string | number) => {
           setCurrentConversationId(id);
           setIsSidebarOpen(false);
           
@@ -710,7 +712,7 @@ export default function App() {
                   timestamp: new Date(msg.created_at),
                 }));
                 
-                setConversations(prev => prev.map(conv => {
+                setConversations((prev: Conversation[]) => prev.map((conv: Conversation) => {
                   if (conv.id === id) {
                     return {
                       ...conv,
@@ -760,7 +762,7 @@ export default function App() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 py-8">
-            {currentConversation?.messages.map((message, index) => {
+            {currentConversation?.messages.map((message: Message, index: number) => {
               // Détecter si c'est le dernier message de l'assistant et qu'il est en cours de streaming
               const isLastMessage = index === (currentConversation.messages.length - 1);
               const isStreaming = isLastMessage && 
